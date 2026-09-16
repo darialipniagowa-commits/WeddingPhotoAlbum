@@ -1,0 +1,768 @@
+﻿@page "/create-board"
+
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using WeddingPhotoAlbum.Models
+
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Создать фотоквест</PageTitle>
+
+<section id="photo-quest-export"
+         class="photo-quest-page">
+
+    <header class="photo-quest-header">
+
+        <h1>Дарья и Янис</h1>
+
+        <p class="wedding-date">
+            19.09.2026
+        </p>
+
+    </header>
+
+    <nav class="board-tabs"
+         aria-label="Разделы фотоквеста"
+         data-html2canvas-ignore="true">
+
+        <button type="button"
+                class="board-tab"
+                @onclick="OpenMainBoard">
+            Наш фотоквест
+        </button>
+
+        <button type="button"
+                class="board-tab board-tab-active">
+            Создать свой
+        </button>
+
+    </nav>
+
+    @if (generatedBoard is null)
+    {
+        <section class="quest-generator">
+
+            <h2>Создайте свой фотоквест</h2>
+
+            <p class="tab-description">
+                Выберите от 3 до 6 тем.
+            </p>
+
+            <div class="tag-selection-status"
+                 aria-live="polite">
+
+                Выбрано:
+                @selectedTagKeys.Count из 6
+
+            </div>
+
+            <div class="tag-cloud"
+                 aria-label="Темы фотоквеста">
+
+                @foreach (var cloudItem in tagCloud)
+                {
+                    <button type="button"
+                            class="@GetTagClass(cloudItem)"
+                            aria-pressed="@selectedTagKeys.Contains(
+                                                        cloudItem.Tag.Key)"
+                            @onclick="() => ToggleTag(
+                                                        cloudItem.Tag.Key)">
+
+@cloudItem.Tag.Title
+
+</button>
+                }
+
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                <p class="generator-validation"
+                   role="alert">
+                    @validationMessage
+                </p>
+            }
+
+            <div class="generator-actions">
+
+                <button type="button"
+                        class="wedding-button"
+                        @onclick="SelectRandomTags">
+                    Удивите меня
+                </button>
+
+                <button type="button"
+                        class="wedding-button wedding-button-primary"
+                        disabled="@(selectedTagKeys.Count < 3)"
+                        @onclick="GenerateBoardAsync">
+                    Создать фотоквест
+                </button>
+
+            </div>
+
+        </section>
+    }
+    else
+    {
+        <section class="tab-panel">
+
+            <h2 data-html2canvas-ignore="true">
+                @generatedBoard.BoardTitle
+            </h2>
+
+            <p class="tab-description"
+               data-html2canvas-ignore="true">
+                @generatedBoard.BoardDescription
+            </p>
+
+            <div class="selected-themes"
+                 data-html2canvas-ignore="true">
+
+                @foreach (var key in selectedTagKeys)
+                {
+                    var tag = QuestPromptCatalog.Tags
+                        .FirstOrDefault(item =>
+                            item.Key == key);
+
+                    if (tag is not null)
+                    {
+                        <span class="selected-theme">
+                            @tag.Title
+                        </span>
+                    }
+                }
+
+            </div>
+
+            <div class="photo-board">
+
+                @foreach (var slot in generatedBoard.Slots)
+                {
+                    <article class="photo-slot @slot.LayoutClass"
+                             @key="slot.Id">
+
+                        <div class="@GetPhotoFrameClass(slot.Id)"
+                             @onclick="() => SelectPhotoSlot(slot.Id)">
+
+                            @if (slot.HasPhoto)
+                            {
+                                <img class="photo-frame-image"
+                                     src="@slot.ImageDataUrl"
+                                     alt="@slot.Title" />
+
+                                <label class="photo-frame-change"
+                                       for="@GetPhotoInputId(slot.Id)"
+                                       data-html2canvas-ignore="true">
+                                    Изменить фото
+                                </label>
+                            }
+                            else
+                            {
+                                <label class="photo-upload-trigger"
+                                       for="@GetPhotoInputId(slot.Id)">
+
+                                    <span class="photo-frame-plus">
+                                        +
+                                    </span>
+
+                                    <span class="photo-frame-instruction">
+                                        Добавить фото
+                                    </span>
+
+                                </label>
+                            }
+
+                            <InputFile id="@GetPhotoInputId(slot.Id)"
+                                       class="photo-file-input-hidden"
+                                       accept="image/*"
+                                       aria-label="@slot.AccessibleLabel"
+                                       OnChange="@(args =>
+                                                                       HandlePhotoSelected(
+                                                                           slot.Id,
+                                                                           args))" />
+
+                        </div>
+
+                        <p class="photo-slot-title">
+                            @slot.Title
+                        </p>
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            slot.ErrorMessage))
+                        {
+                            <p class="photo-slot-error"
+                               role="alert"
+                               data-html2canvas-ignore="true">
+                                @slot.ErrorMessage
+                            </p>
+                        }
+
+                    </article>
+                }
+
+            </div>
+
+            <footer class="board-footer"
+                    data-html2canvas-ignore="true">
+
+                <p class="board-progress">
+                    Заполнено:
+                    @generatedBoard.CompletedPhotoCount
+                    из
+                    @generatedBoard.Slots.Count
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(saveMessage))
+                {
+                    <p class="board-save-message"
+                       aria-live="polite">
+                        @saveMessage
+                    </p>
+                }
+
+                <div class="board-actions">
+
+                    <button type="button"
+                            class="wedding-button"
+                            disabled="@isSaving"
+                            @onclick="() => SaveProgressAsync(true)">
+
+                        @(isSaving
+                            ? "Сохранение..."
+                            : "Сохранить прогресс")
+
+                    </button>
+
+                    <button type="button"
+                            class="wedding-button"
+                            disabled="@(!HasAnyPhotos || isExporting)"
+                            @onclick="DownloadBoardAsync">
+
+                        @(isExporting
+                            ? "Создание PNG..."
+                            : "Скачать PNG")
+
+                    </button>
+
+                    <button type="button"
+                            class="wedding-button wedding-button-primary"
+                            disabled="@(!HasAnyPhotos || isExporting)"
+                            @onclick="ShareBoardAsync">
+                        Поделиться
+                    </button>
+
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(exportMessage))
+                {
+                    <p class="board-export-message"
+                       aria-live="polite">
+                        @exportMessage
+                    </p>
+                }
+
+                <div class="generated-board-actions">
+
+                    <button type="button"
+                            class="wedding-button"
+                            @onclick="CreateAnotherBoardAsync">
+                        Выбрать другие темы
+                    </button>
+
+                    <button type="button"
+                            class="wedding-button"
+                            @onclick="RegenerateBoardAsync">
+                        Перемешать задания
+                    </button>
+
+                </div>
+
+            </footer>
+
+        </section>
+    }
+
+</section>
+
+@code {
+    private const long MaximumPhotoSize =
+        15 * 1024 * 1024;
+
+    private const string GeneratedBoardStorageKey =
+        "daria-janis-generated-board";
+
+    private readonly HashSet<string> selectedTagKeys =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private List<TagCloudItem> tagCloud = [];
+
+    private WeddingBoard? generatedBoard;
+
+    private int? selectedPhotoSlotId;
+
+    private bool progressLoaded;
+
+    private bool isSaving;
+
+    private bool isExporting;
+
+    private string? validationMessage;
+
+    private string? saveMessage;
+
+    private string? exportMessage;
+
+    private bool HasAnyPhotos =>
+        generatedBoard?.CompletedPhotoCount > 0;
+
+    protected override void OnInitialized()
+    {
+        GenerateTagCloud();
+    }
+
+    protected override async Task OnAfterRenderAsync(
+        bool firstRender)
+    {
+        if (!firstRender || progressLoaded)
+        {
+            return;
+        }
+
+        progressLoaded = true;
+
+        await LoadProgressAsync();
+
+        StateHasChanged();
+    }
+
+    private void GenerateTagCloud()
+    {
+        tagCloud = QuestPromptCatalog.Tags
+            .OrderBy(_ => Random.Shared.Next())
+            .Select(tag => new TagCloudItem(
+                tag,
+                $"tag-size-{Random.Shared.Next(1, 4)}"))
+            .ToList();
+    }
+
+    private void ToggleTag(string tagKey)
+    {
+        validationMessage = null;
+
+        if (selectedTagKeys.Contains(tagKey))
+        {
+            selectedTagKeys.Remove(tagKey);
+            return;
+        }
+
+        if (selectedTagKeys.Count >= 6)
+        {
+            validationMessage =
+                "Можно выбрать не больше 6 тем.";
+
+            return;
+        }
+
+        selectedTagKeys.Add(tagKey);
+    }
+
+    private void SelectRandomTags()
+    {
+        selectedTagKeys.Clear();
+
+        var randomTags = QuestPromptCatalog.Tags
+            .OrderBy(_ => Random.Shared.Next())
+            .Take(3);
+
+        foreach (var tag in randomTags)
+        {
+            selectedTagKeys.Add(tag.Key);
+        }
+
+        validationMessage = null;
+    }
+
+    private async Task GenerateBoardAsync()
+    {
+        if (selectedTagKeys.Count < 3)
+        {
+            validationMessage =
+                "Выберите минимум 3 темы.";
+
+            return;
+        }
+
+        generatedBoard =
+            QuestPromptCatalog.GenerateBoard(
+                selectedTagKeys);
+
+        validationMessage = null;
+        saveMessage = null;
+        exportMessage = null;
+
+        await SaveProgressAsync(false);
+    }
+
+    private async Task RegenerateBoardAsync()
+    {
+        generatedBoard =
+            QuestPromptCatalog.GenerateBoard(
+                selectedTagKeys);
+
+        selectedPhotoSlotId = null;
+        saveMessage = null;
+        exportMessage = null;
+
+        await SaveProgressAsync(false);
+
+        saveMessage =
+            "Новые задания сохранены.";
+    }
+
+    private async Task CreateAnotherBoardAsync()
+    {
+        await JS.InvokeVoidAsync(
+            "weddingBoardStorage.remove",
+            GeneratedBoardStorageKey);
+
+        generatedBoard = null;
+
+        selectedTagKeys.Clear();
+
+        selectedPhotoSlotId = null;
+        validationMessage = null;
+        saveMessage = null;
+        exportMessage = null;
+
+        GenerateTagCloud();
+    }
+
+    private void OpenMainBoard()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private void SelectPhotoSlot(int slotId)
+    {
+        selectedPhotoSlotId = slotId;
+    }
+
+    private async Task HandlePhotoSelected(
+        int slotId,
+        InputFileChangeEventArgs args)
+    {
+        if (generatedBoard is null)
+        {
+            return;
+        }
+
+        var slot = generatedBoard.Slots.FirstOrDefault(
+            item => item.Id == slotId);
+
+        if (slot is null)
+        {
+            return;
+        }
+
+        slot.ErrorMessage = null;
+        saveMessage = null;
+        exportMessage = null;
+
+        var file = args.File;
+
+        if (!file.ContentType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            slot.ErrorMessage =
+                "Пожалуйста, выберите изображение.";
+
+            return;
+        }
+
+        try
+        {
+            await using var inputStream =
+                file.OpenReadStream(MaximumPhotoSize);
+
+            using var memoryStream =
+                new MemoryStream();
+
+            await inputStream.CopyToAsync(
+                memoryStream);
+
+            var base64 = Convert.ToBase64String(
+                memoryStream.ToArray());
+
+            slot.ImageDataUrl =
+                $"data:{file.ContentType};base64,{base64}";
+
+            slot.FileName = file.Name;
+            selectedPhotoSlotId = slotId;
+
+            await SaveProgressAsync(false);
+
+            saveMessage =
+                "Изменения сохранены автоматически.";
+        }
+        catch (IOException)
+        {
+            slot.ErrorMessage =
+                "Фотография слишком большая. " +
+                "Максимальный размер — 15 МБ.";
+        }
+        catch
+        {
+            slot.ErrorMessage =
+                "Не удалось загрузить фотографию.";
+        }
+    }
+
+    private async Task SaveProgressAsync(
+        bool showMessage)
+    {
+        if (generatedBoard is null || isSaving)
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        if (showMessage)
+        {
+            saveMessage = "Сохранение...";
+        }
+
+        try
+        {
+            var progress = new BoardProgress
+            {
+                BoardId = GeneratedBoardStorageKey,
+
+                BoardTitle =
+                    generatedBoard.BoardTitle,
+
+                BoardDescription =
+                    generatedBoard.BoardDescription,
+
+                SavedAtUtc =
+                    DateTime.UtcNow,
+
+                SelectedTagKeys =
+                    selectedTagKeys.ToList(),
+
+                Slots = generatedBoard.Slots
+                    .Select(slot => new SavedPhotoSlot
+                    {
+                        Id = slot.Id,
+                        Title = slot.Title,
+                        LayoutClass = slot.LayoutClass,
+                        FileName = slot.FileName,
+                        ImageDataUrl = slot.ImageDataUrl
+                    })
+                    .ToList()
+            };
+
+            await JS.InvokeVoidAsync(
+                "weddingBoardStorage.save",
+                GeneratedBoardStorageKey,
+                progress);
+
+            if (showMessage)
+            {
+                saveMessage =
+                    $"Прогресс сохранён: {DateTime.Now:HH:mm}";
+            }
+        }
+        catch
+        {
+            saveMessage =
+                "Не удалось сохранить прогресс.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task LoadProgressAsync()
+    {
+        try
+        {
+            var progress =
+                await JS.InvokeAsync<BoardProgress?>(
+                    "weddingBoardStorage.load",
+                    GeneratedBoardStorageKey);
+
+            if (progress is null ||
+                progress.Slots.Count == 0)
+            {
+                return;
+            }
+
+            selectedTagKeys.Clear();
+
+            foreach (var key in progress.SelectedTagKeys)
+            {
+                selectedTagKeys.Add(key);
+            }
+
+            generatedBoard = new WeddingBoard
+            {
+                CoupleNames = "Дарья и Янис",
+                WeddingDate = "19.09.2026",
+
+                BoardTitle = string.IsNullOrWhiteSpace(
+                    progress.BoardTitle)
+                    ? "Ваш фотоквест"
+                    : progress.BoardTitle,
+
+                BoardDescription = string.IsNullOrWhiteSpace(
+                    progress.BoardDescription)
+                    ? "Добавьте фотографии во все задания."
+                    : progress.BoardDescription,
+
+                Slots = progress.Slots
+                    .OrderBy(slot => slot.Id)
+                    .Select(slot =>
+                    {
+                        var photoSlot = new PhotoSlot(
+                            slot.Id,
+                            slot.Title,
+                            slot.LayoutClass);
+
+                        photoSlot.FileName =
+                            slot.FileName;
+
+                        photoSlot.ImageDataUrl =
+                            slot.ImageDataUrl;
+
+                        return photoSlot;
+                    })
+                    .ToList()
+            };
+
+            saveMessage =
+                "Сохранённый фотоквест восстановлен.";
+        }
+        catch
+        {
+            saveMessage =
+                "Не удалось восстановить фотоквест.";
+        }
+    }
+
+    private async Task DownloadBoardAsync()
+    {
+        if (!HasAnyPhotos || isExporting)
+        {
+            return;
+        }
+
+        isExporting = true;
+        exportMessage = "Создаём PNG...";
+
+        try
+        {
+            await PrepareBoardForExportAsync();
+
+            await JS.InvokeAsync<string>(
+                "weddingBoardExport.downloadPng");
+
+            exportMessage =
+                "Фотоквест сохранён в формате PNG.";
+        }
+        catch
+        {
+            exportMessage =
+                "Не удалось создать PNG.";
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    private async Task ShareBoardAsync()
+    {
+        if (!HasAnyPhotos || isExporting)
+        {
+            return;
+        }
+
+        isExporting = true;
+
+        exportMessage =
+            "Подготавливаем фотографию...";
+
+        try
+        {
+            await PrepareBoardForExportAsync();
+
+            var result =
+                await JS.InvokeAsync<string>(
+                    "weddingBoardExport.sharePng");
+
+            exportMessage = result == "shared"
+                ? "Фотоквест отправлен."
+                : "Меню отправки недоступно. PNG скачан.";
+        }
+        catch (JSException exception)
+            when (exception.Message.Contains(
+                "AbortError",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            exportMessage =
+                "Отправка отменена.";
+        }
+        catch
+        {
+            exportMessage =
+                "Не удалось поделиться.";
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    private async Task PrepareBoardForExportAsync()
+    {
+        selectedPhotoSlotId = null;
+
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(50);
+    }
+
+    private string GetTagClass(
+        TagCloudItem cloudItem)
+    {
+        var selectedClass =
+            selectedTagKeys.Contains(cloudItem.Tag.Key)
+                ? " tag-cloud-item-selected"
+                : string.Empty;
+
+        return
+            $"tag-cloud-item {cloudItem.SizeClass}{selectedClass}";
+    }
+
+    private string GetPhotoFrameClass(
+        int slotId)
+    {
+        return selectedPhotoSlotId == slotId
+            ? "photo-frame photo-frame-selected"
+            : "photo-frame";
+    }
+
+    private static string GetPhotoInputId(
+        int slotId)
+    {
+        return $"generated-photo-input-{slotId}";
+    }
+
+    private sealed record TagCloudItem(
+        QuestTag Tag,
+        string SizeClass);
+}

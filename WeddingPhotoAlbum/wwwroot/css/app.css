@@ -1,0 +1,977 @@
+/* =========================================================
+   WEDDING PHOTO QUEST — THEME
+   ========================================================= */
+
+:root {
+    --wedding-champagne: #f4eddf;
+    --wedding-champagne-light: #fbf8f1;
+    --wedding-champagne-dark: #e8dcc8;
+    --wedding-green: #344a3b;
+    --wedding-green-dark: #24352a;
+    --wedding-green-muted: #73806f;
+    --wedding-green-light: #aab5a2;
+    --wedding-gold: #9c7a3d;
+    --wedding-gold-light: #c0a66c;
+    --wedding-red: #9b4033;
+    --wedding-border: rgba(52, 74, 59, 0.32);
+    --wedding-gold-border: rgba(156, 122, 61, 0.42);
+    --wedding-shadow: rgba(52, 45, 32, 0.14);
+    --font-heading: Georgia, "Times New Roman", serif;
+    --font-body: Arial, Helvetica, sans-serif;
+    --wedding-hero-image: url("/images/wedding-background.png");
+    --wedding-board-image: url("/images/wedding-board.png");
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+}
+
+html {
+    background-color: var(--wedding-champagne);
+}
+
+body {
+    color: var(--wedding-green);
+    background-color: var(--wedding-champagne);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
+
+h1,
+h2,
+h3 {
+    margin-top: 0;
+    color: var(--wedding-green-dark);
+    font-family: var(--font-heading);
+    font-weight: 400;
+}
+
+h1 {
+    font-size: clamp(2rem, 7vw, 4rem);
+    font-style: italic;
+}
+
+h2 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+p {
+    margin-top: 0;
+}
+
+a {
+    color: var(--wedding-green);
+}
+
+
+/* =========================================================
+   APPLICATION AND HERO BACKGROUND
+   ========================================================= */
+
+#app {
+    min-height: 100vh;
+}
+/* =========================================================
+   MAIN PAGE BACKGROUND
+   ========================================================= */
+
+.wedding-app {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--wedding-green);
+    background-color: var(--wedding-champagne);
+}
+
+    .wedding-app::before {
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 0;
+        width: 100%;
+        height: 100%;
+        content: "";
+        pointer-events: none;
+        background-color: var(--wedding-champagne);
+        background-image: var(--wedding-hero-image);
+        background-repeat: no-repeat;
+        background-position: top center;
+        background-size: 100% auto;
+        /* No fading gradient */
+        opacity: 1;
+        mask-image: none;
+        -webkit-mask-image: none;
+    }
+
+.wedding-content {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 1200px);
+    margin: 0 auto;
+    padding: 28px 20px 70px;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+button,
+.wedding-button {
+    min-height: 44px;
+    padding: 11px 18px;
+    color: var(--wedding-green);
+    background-color: rgba(251, 248, 241, 0.74);
+    border: 1px solid var(--wedding-green);
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+    button:hover,
+    .wedding-button:hover {
+        color: var(--wedding-champagne-light);
+        background-color: var(--wedding-green);
+    }
+
+    button:active,
+    .wedding-button:active {
+        transform: translateY(1px);
+    }
+
+    button:focus-visible,
+    .wedding-button:focus-visible {
+        outline: 3px solid rgba(156, 122, 61, 0.34);
+        outline-offset: 3px;
+    }
+
+    button:disabled,
+    .wedding-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+.wedding-button-primary {
+    color: var(--wedding-champagne-light);
+    background-color: var(--wedding-green);
+}
+
+    .wedding-button-primary:hover {
+        background-color: var(--wedding-green-dark);
+    }
+
+
+/* =========================================================
+   FORM CONTROLS
+   ========================================================= */
+
+input,
+select,
+textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: var(--wedding-green-dark);
+    background-color: var(--wedding-champagne-light);
+    border: 1px solid var(--wedding-border);
+    border-radius: 7px;
+    font: inherit;
+}
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--wedding-green);
+        outline: 3px solid rgba(52, 74, 59, 0.12);
+    }
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+::selection {
+    color: var(--wedding-champagne-light);
+    background-color: var(--wedding-green);
+}
+
+
+/* =========================================================
+   BLAZOR ERROR UI
+   ========================================================= */
+
+#blazor-error-ui {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: none;
+    padding: 12px 48px 12px 20px;
+    color: white;
+    background-color: var(--wedding-red);
+}
+
+    #blazor-error-ui .dismiss {
+        position: absolute;
+        top: 8px;
+        right: 14px;
+        min-height: auto;
+        padding: 2px 6px;
+        color: white;
+        border: 0;
+    }
+
+
+/* =========================================================
+   PHOTO QUEST PAGE
+   ========================================================= */
+
+.photo-quest-page {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 0 60px;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.photo-quest-header {
+    margin-bottom: 28px;
+    text-align: center;
+}
+
+    .photo-quest-header h1 {
+        margin-bottom: 6px;
+        color: var(--wedding-green-dark);
+    }
+
+.wedding-date {
+    margin: 0;
+    color: var(--wedding-green-muted);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    letter-spacing: 0.18em;
+}
+
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+.board-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    width: min(100%, 520px);
+    margin: 0 auto 34px;
+    padding: 5px;
+    background-color: rgba(251, 248, 241, 0.82);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--wedding-border);
+    border-radius: 12px;
+}
+
+.board-tab {
+    flex: 1;
+    min-height: 48px;
+    padding: 10px 16px;
+    color: var(--wedding-green);
+    background-color: transparent;
+    border: 0;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+}
+
+    .board-tab:hover {
+        color: var(--wedding-green-dark);
+        background-color: rgba(52, 74, 59, 0.08);
+    }
+
+.board-tab-active,
+.board-tab-active:hover {
+    color: var(--wedding-champagne-light);
+    background-color: var(--wedding-green);
+}
+
+
+/* =========================================================
+   TAB CONTENT
+   ========================================================= */
+
+.board-tab-content {
+    width: 100%;
+}
+
+.tab-panel {
+    text-align: center;
+}
+
+    .tab-panel h2 {
+        margin-bottom: 10px;
+    }
+
+.tab-description {
+    max-width: 600px;
+    margin: 0 auto 24px;
+    color: var(--wedding-green-muted);
+}
+
+.board-placeholder {
+    display: grid;
+    place-items: center;
+    width: min(100%, 820px);
+    min-height: 430px;
+    margin: 0 auto;
+    padding: 30px;
+    color: var(--wedding-green-muted);
+    background-color: rgba(251, 248, 241, 0.82);
+    border: 1px dashed var(--wedding-border);
+    border-radius: 12px;
+}
+
+
+/* =========================================================
+   PHOTO BOARD — FIXED 3 × 4 IMAGE
+   ========================================================= */
+
+.photo-board {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.82fr) minmax(0, 1.08fr);
+    align-items: center;
+    gap: 54px 50px;
+    width: min(100%, 900px);
+    margin: 0 auto;
+    padding: 102px 76px 114px;
+    background-color: var(--wedding-champagne-light);
+    background-image: var(--wedding-board-image);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+    border: 1px solid var(--wedding-gold-border);
+    box-shadow: 0 18px 45px var(--wedding-shadow);
+}
+
+    .photo-board::before {
+        position: absolute;
+        inset: 15px;
+        z-index: 0;
+        content: "";
+        pointer-events: none;
+        border: 1px solid rgba(156, 122, 61, 0.22);
+    }
+
+    /* =========================================================
+   GENERATED QUEST BOARD
+   No baked-in frame background because prompts are random
+   ========================================================= */
+
+    .photo-board.generated-photo-board {
+        position: relative;
+        isolation: isolate;
+        background-color: rgba(251, 248, 241, 0.94);
+        background-image: none;
+        border: 1px solid rgba(156, 122, 61, 0.42);
+        box-shadow: 0 18px 45px rgba(52, 45, 32, 0.14), inset 0 0 0 12px rgba(251, 248, 241, 0.72), inset 0 0 0 13px rgba(156, 122, 61, 0.22);
+    }
+
+        /* Subtle paper texture without fixed frames */
+        .photo-board.generated-photo-board::before {
+            position: absolute;
+            inset: 14px;
+            z-index: -1;
+            content: "";
+            pointer-events: none;
+            background: radial-gradient( circle at 14% 12%, rgba(255, 255, 255, 0.6), transparent 30% ), radial-gradient( circle at 86% 82%, rgba(156, 122, 61, 0.07), transparent 32% ), repeating-linear-gradient( 0deg, rgba(52, 74, 59, 0.018) 0, rgba(52, 74, 59, 0.018) 1px, transparent 1px, transparent 5px );
+            border: 1px solid rgba(52, 74, 59, 0.18);
+        }
+
+/* Keep generated frames above the paper decoration */
+.generated-photo-board .photo-slot {
+    position: relative;
+    z-index: 1;
+}
+
+/* Give every generated slot its own complete frame */
+.generated-photo-board .photo-frame {
+    background-color: rgba(251, 248, 241, 0.96);
+    border: 1px solid rgba(52, 74, 59, 0.48);
+    box-shadow: 0 7px 15px rgba(52, 45, 32, 0.11), inset 0 0 0 7px rgba(251, 248, 241, 0.95), inset 0 0 0 8px rgba(156, 122, 61, 0.32);
+}
+
+/* =========================================================
+   GENERATED BOARD — TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+    .photo-board.generated-photo-board {
+        padding: 58px 34px 70px;
+        gap: 44px 30px;
+        background-image: none;
+    }
+}
+
+/* =========================================================
+   GENERATED BOARD — MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+    .photo-board.generated-photo-board {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 34px 18px;
+        padding: 38px 20px 48px;
+        background-color: rgba(251, 248, 241, 0.95);
+        background-image: none;
+    }
+
+        .photo-board.generated-photo-board::before {
+            inset: 8px;
+        }
+}
+
+@media (max-width: 420px) {
+    .photo-board.generated-photo-board {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding: 34px 18px 44px;
+    }
+}
+/* =========================================================
+   PHOTO SLOTS
+   ========================================================= */
+
+.photo-slot {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+}
+
+
+/* =========================================================
+   LIVE FRAMES OVER IMAGE FRAMES
+   ========================================================= */
+
+.photo-frame {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 0;
+    padding: 9px;
+    color: var(--wedding-green-muted);
+    background-color: rgba(251, 248, 241, 0.94);
+    border: 1px solid rgba(52, 74, 59, 0.35);
+    border-radius: 0;
+    box-shadow: 0 0 0 3px rgba(251, 248, 241, 0.62), 2px 4px 8px rgba(52, 45, 32, 0.1);
+    overflow: hidden;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+    .photo-frame::before {
+        position: absolute;
+        inset: 8px;
+        z-index: 2;
+        content: "";
+        pointer-events: none;
+        border: 1px solid rgba(156, 122, 61, 0.4);
+    }
+
+    .photo-frame:hover {
+        border-color: var(--wedding-gold);
+        transform: translateY(-2px);
+        box-shadow: 0 0 0 3px rgba(251, 248, 241, 0.72), 3px 6px 12px rgba(52, 45, 32, 0.16);
+    }
+
+.photo-frame-selected {
+    border-color: var(--wedding-gold);
+    box-shadow: 0 0 0 4px rgba(156, 122, 61, 0.22), 0 0 0 6px rgba(251, 248, 241, 0.86), 3px 6px 14px rgba(52, 45, 32, 0.17);
+}
+
+
+/* =========================================================
+   FRAME SIZES
+   ========================================================= */
+
+.photo-slot-landscape .photo-frame {
+    aspect-ratio: 4 / 3;
+}
+
+.photo-slot-portrait .photo-frame {
+    width: 78%;
+    aspect-ratio: 3 / 4;
+}
+
+.photo-slot-wide .photo-frame {
+    aspect-ratio: 16 / 9;
+}
+
+
+/* =========================================================
+   PHOTO UPLOAD
+   ========================================================= */
+
+.photo-upload-trigger {
+    position: absolute;
+    inset: 8px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: var(--wedding-green-muted);
+    cursor: pointer;
+    transition: color 160ms ease;
+}
+
+    .photo-upload-trigger:hover {
+        color: var(--wedding-green-dark);
+    }
+
+.photo-frame-plus {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.photo-frame-instruction {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+}
+
+
+/* =========================================================
+   HIDDEN INPUT
+   ========================================================= */
+
+.photo-file-input-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-height: 0 !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+}
+
+
+/* =========================================================
+   PHOTO PREVIEW
+   ========================================================= */
+
+.photo-frame-image {
+    position: absolute;
+    inset: 8px;
+    z-index: 1;
+    display: block;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    object-fit: cover;
+    object-position: center;
+    pointer-events: none;
+    user-select: none;
+}
+
+
+/* =========================================================
+   CHANGE PHOTO
+   ========================================================= */
+
+.photo-frame-change {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    z-index: 4;
+    padding: 7px 9px;
+    color: var(--wedding-champagne-light);
+    background-color: rgba(36, 53, 42, 0.84);
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 160ms ease, background-color 160ms ease;
+}
+
+.photo-frame:hover .photo-frame-change,
+.photo-frame:focus-within .photo-frame-change {
+    opacity: 1;
+}
+
+.photo-frame-change:hover {
+    background-color: var(--wedding-green-dark);
+}
+
+
+/* =========================================================
+   SLOT TITLES AND ERRORS
+   ========================================================= */
+
+.photo-slot-title {
+    margin: 14px 0 0;
+    color: var(--wedding-green);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-style: italic;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.photo-slot-error {
+    width: 100%;
+    margin: 6px 0 0;
+    color: var(--wedding-red);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    line-height: 1.3;
+    text-align: center;
+}
+
+
+/* =========================================================
+   BOARD FOOTER
+   ========================================================= */
+
+.board-footer {
+    width: min(100%, 900px);
+    margin: 24px auto 0;
+}
+
+.board-progress {
+    margin-bottom: 14px;
+    color: var(--wedding-green-muted);
+    text-align: center;
+}
+
+.board-save-message {
+    margin: -6px 0 14px;
+    color: var(--wedding-green);
+    font-size: 0.86rem;
+    text-align: center;
+}
+
+.board-export-message {
+    margin: 14px 0 0;
+    color: var(--wedding-green);
+    font-size: 0.86rem;
+    text-align: center;
+}
+
+.board-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+
+/* =========================================================
+   QUEST GENERATOR
+   ========================================================= */
+
+.quest-generator {
+    width: min(100%, 850px);
+    margin: 0 auto;
+    text-align: center;
+}
+
+.tag-selection-status {
+    margin-bottom: 18px;
+    color: var(--wedding-green-muted);
+    font-size: 0.9rem;
+}
+
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 12px;
+    padding: 32px;
+    background-color: rgba(251, 248, 241, 0.84);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--wedding-border);
+    border-radius: 12px;
+}
+
+.tag-cloud-item {
+    min-height: 42px;
+    padding: 8px 15px;
+    color: var(--wedding-green);
+    background-color: rgba(251, 248, 241, 0.45);
+    border: 1px solid rgba(52, 74, 59, 0.35);
+    border-radius: 999px;
+}
+
+    .tag-cloud-item:hover {
+        color: var(--wedding-green-dark);
+        background-color: rgba(52, 74, 59, 0.08);
+    }
+
+.tag-cloud-item-selected,
+.tag-cloud-item-selected:hover {
+    color: var(--wedding-champagne-light);
+    background-color: var(--wedding-green);
+    border-color: var(--wedding-green);
+}
+
+.tag-size-1 {
+    font-size: 0.88rem;
+}
+
+.tag-size-2 {
+    font-size: 1rem;
+}
+
+.tag-size-3 {
+    font-size: 1.15rem;
+}
+
+.generator-validation {
+    margin: 16px 0 0;
+    color: var(--wedding-red);
+    text-align: center;
+}
+
+.generator-actions,
+.generated-board-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.selected-themes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+    margin: 0 auto 22px;
+}
+
+.selected-theme {
+    padding: 5px 10px;
+    color: var(--wedding-green);
+    background-color: rgba(52, 74, 59, 0.08);
+    border-radius: 999px;
+    font-size: 0.82rem;
+}
+
+
+/* =========================================================
+   TABLET
+   Keep 3 columns so the image frames stay aligned.
+   ========================================================= */
+
+@media (max-width: 900px) {
+    .wedding-content {
+        padding: 16px;
+    }
+
+    .photo-quest-page {
+        padding-top: 24px;
+    }
+
+    .photo-board {
+        gap: 44px 34px;
+        padding: 86px 58px 96px;
+    }
+
+    .photo-slot-title {
+        font-size: 0.9rem;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   The baked 3 × 4 frame image is disabled because the live
+   grid changes to 2 columns.
+   ========================================================= */
+
+@media (max-width: 600px) {
+    .wedding-content {
+        padding: 12px;
+    }
+
+    .wedding-app::before {
+        height: 720px;
+        background-size: auto 720px;
+    }
+
+    .photo-quest-page {
+        padding-top: 18px;
+        padding-bottom: 40px;
+    }
+
+    .photo-quest-header {
+        margin-bottom: 20px;
+    }
+
+        .photo-quest-header h1 {
+            margin-bottom: 4px;
+        }
+
+    .wedding-date {
+        font-size: 1rem;
+        letter-spacing: 0.13em;
+    }
+
+    .board-tabs {
+        gap: 4px;
+        margin-bottom: 26px;
+        padding: 4px;
+    }
+
+    .board-tab {
+        min-height: 46px;
+        padding-right: 10px;
+        padding-left: 10px;
+        font-size: 0.92rem;
+    }
+
+    .tab-description {
+        margin-bottom: 20px;
+    }
+
+    .board-placeholder {
+        min-height: 360px;
+        padding: 18px;
+    }
+
+    .photo-board {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 32px 15px;
+        padding: 44px 20px;
+        background-image: linear-gradient( rgba(251, 248, 241, 0.88), rgba(251, 248, 241, 0.88) ), var(--wedding-board-image);
+        background-size: cover;
+        background-position: center;
+    }
+
+        .photo-board::before {
+            inset: 8px;
+        }
+
+    .photo-slot-portrait .photo-frame {
+        width: 82%;
+    }
+
+    .photo-frame-plus {
+        font-size: 1.65rem;
+    }
+
+    .photo-frame-instruction {
+        font-size: 0.7rem;
+    }
+
+    .photo-frame-change {
+        right: 11px;
+        bottom: 11px;
+        left: 11px;
+        padding: 6px;
+        font-size: 0.7rem;
+        opacity: 1;
+    }
+
+    .photo-slot-title {
+        margin-top: 10px;
+        font-size: 0.86rem;
+    }
+
+    .board-actions,
+    .generator-actions,
+    .generated-board-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .tag-cloud {
+        gap: 8px;
+        padding: 20px 14px;
+    }
+
+    .tag-size-1 {
+        font-size: 0.8rem;
+    }
+
+    .tag-size-2 {
+        font-size: 0.9rem;
+    }
+
+    .tag-size-3 {
+        font-size: 1rem;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 380px) {
+    .wedding-content {
+        padding-right: 8px;
+        padding-left: 8px;
+    }
+
+    .board-tab {
+        padding-right: 6px;
+        padding-left: 6px;
+        font-size: 0.86rem;
+    }
+
+    .photo-board {
+        gap: 27px 10px;
+        padding: 38px 14px;
+    }
+
+    .photo-slot-title {
+        font-size: 0.78rem;
+    }
+}

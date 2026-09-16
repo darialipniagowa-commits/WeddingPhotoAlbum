@@ -1,0 +1,518 @@
+﻿@page "/"
+
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using WeddingPhotoAlbum.Models
+
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>@mainBoard.CoupleNames — Фотоквест</PageTitle>
+
+<section id="photo-quest-export"
+         class="photo-quest-page">
+
+    <header class="photo-quest-header">
+
+        <h1>
+            @mainBoard.CoupleNames
+        </h1>
+
+        <p class="wedding-date">
+            @mainBoard.WeddingDate
+        </p>
+
+    </header>
+
+    <nav class="board-tabs"
+         aria-label="Разделы фотоквеста"
+         data-html2canvas-ignore="true">
+
+        <button type="button"
+                class="board-tab board-tab-active">
+            Наш фотоквест
+        </button>
+
+        <button type="button"
+                class="board-tab"
+                @onclick="OpenBoardGenerator">
+            Создать свой
+        </button>
+
+    </nav>
+
+    <main class="board-tab-content">
+
+        <section class="tab-panel">
+
+            <h2 data-html2canvas-ignore="true">
+                @mainBoard.BoardTitle
+            </h2>
+
+            <p class="tab-description"
+               data-html2canvas-ignore="true">
+                @mainBoard.BoardDescription
+            </p>
+
+            <div class="photo-board">
+
+                @foreach (var slot in mainBoard.Slots)
+                {
+                    <article class="photo-slot @slot.LayoutClass"
+                             @key="slot.Id">
+
+                        <div class="@GetPhotoFrameClass(slot.Id)"
+                             @onclick="() => SelectPhotoSlot(slot.Id)">
+
+                            @if (slot.HasPhoto)
+                            {
+                                <img class="photo-frame-image"
+                                     src="@slot.ImageDataUrl"
+                                     alt="@slot.Title" />
+
+                                <label class="photo-frame-change"
+                                       for="@GetPhotoInputId(slot.Id)"
+                                       data-html2canvas-ignore="true">
+                                    Изменить фото
+                                </label>
+                            }
+                            else
+                            {
+                                <label class="photo-upload-trigger"
+                                       for="@GetPhotoInputId(slot.Id)">
+
+                                    <span class="photo-frame-plus">
+                                        +
+                                    </span>
+
+                                    <span class="photo-frame-instruction">
+                                        Добавить фото
+                                    </span>
+
+                                </label>
+                            }
+
+                            <InputFile id="@GetPhotoInputId(slot.Id)"
+                                       class="photo-file-input-hidden"
+                                       accept="image/*"
+                                       aria-label="@slot.AccessibleLabel"
+                                       OnChange="@(args =>
+                                                                       HandlePhotoSelected(
+                                                                           slot.Id,
+                                                                           args))" />
+
+                        </div>
+
+                        <p class="photo-slot-title">
+                            @slot.Title
+                        </p>
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            slot.ErrorMessage))
+                        {
+                            <p class="photo-slot-error"
+                               role="alert"
+                               data-html2canvas-ignore="true">
+                                @slot.ErrorMessage
+                            </p>
+                        }
+
+                    </article>
+                }
+
+            </div>
+
+            <footer class="board-footer"
+                    data-html2canvas-ignore="true">
+
+                <p class="board-progress">
+                    Заполнено:
+                    @mainBoard.CompletedPhotoCount
+                    из
+                    @mainBoard.Slots.Count
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(saveMessage))
+                {
+                    <p class="board-save-message"
+                       aria-live="polite">
+                        @saveMessage
+                    </p>
+                }
+
+                <div class="board-actions">
+
+                    <button type="button"
+                            class="wedding-button"
+                            disabled="@isSaving"
+                            @onclick="() => SaveProgressAsync(true)">
+
+                        @if (isSaving)
+                        {
+                            <span>Сохранение...</span>
+                        }
+                        else
+                        {
+                            <span>Сохранить прогресс</span>
+                        }
+
+                    </button>
+
+                    <button type="button"
+                            class="wedding-button"
+                            disabled="@(!HasAnyPhotos || isExporting)"
+                            @onclick="DownloadBoardAsync">
+
+                        @if (isExporting)
+                        {
+                            <span>Создание PNG...</span>
+                        }
+                        else
+                        {
+                            <span>Скачать PNG</span>
+                        }
+
+                    </button>
+
+                    <button type="button"
+                            class="wedding-button wedding-button-primary"
+                            disabled="@(!HasAnyPhotos || isExporting)"
+                            @onclick="ShareBoardAsync">
+                        Поделиться
+                    </button>
+
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(exportMessage))
+                {
+                    <p class="board-export-message"
+                       aria-live="polite">
+                        @exportMessage
+                    </p>
+                }
+
+            </footer>
+
+        </section>
+
+    </main>
+
+</section>
+
+@code {
+    private const long MaximumPhotoSize =
+        15 * 1024 * 1024;
+
+    private const string MainBoardStorageKey =
+        "daria-janis-main-board";
+
+    private readonly WeddingBoard mainBoard =
+        WeddingBoard.CreateMainBoard();
+
+    private int? selectedPhotoSlotId;
+
+    private bool progressLoaded;
+
+    private bool isSaving;
+
+    private bool isExporting;
+
+    private string? saveMessage;
+
+    private string? exportMessage;
+
+    private bool HasAnyPhotos =>
+        mainBoard.CompletedPhotoCount > 0;
+
+    protected override async Task OnAfterRenderAsync(
+        bool firstRender)
+    {
+        if (!firstRender || progressLoaded)
+        {
+            return;
+        }
+
+        progressLoaded = true;
+
+        await LoadProgressAsync();
+
+        StateHasChanged();
+    }
+
+    private void OpenBoardGenerator()
+    {
+        Navigation.NavigateTo("/create-board");
+    }
+
+    private void SelectPhotoSlot(int slotId)
+    {
+        selectedPhotoSlotId = slotId;
+    }
+
+    private async Task HandlePhotoSelected(
+        int slotId,
+        InputFileChangeEventArgs args)
+    {
+        var slot = mainBoard.Slots.FirstOrDefault(
+            item => item.Id == slotId);
+
+        if (slot is null)
+        {
+            return;
+        }
+
+        slot.ErrorMessage = null;
+        saveMessage = null;
+        exportMessage = null;
+
+        var file = args.File;
+
+        if (!file.ContentType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            slot.ErrorMessage =
+                "Пожалуйста, выберите изображение.";
+
+            return;
+        }
+
+        try
+        {
+            await using var inputStream =
+                file.OpenReadStream(MaximumPhotoSize);
+
+            using var memoryStream =
+                new MemoryStream();
+
+            await inputStream.CopyToAsync(
+                memoryStream);
+
+            var imageBytes =
+                memoryStream.ToArray();
+
+            var base64 =
+                Convert.ToBase64String(imageBytes);
+
+            slot.ImageDataUrl =
+                $"data:{file.ContentType};base64,{base64}";
+
+            slot.FileName = file.Name;
+            selectedPhotoSlotId = slotId;
+
+            await SaveProgressAsync(false);
+
+            saveMessage =
+                "Изменения сохранены автоматически.";
+        }
+        catch (IOException)
+        {
+            slot.ErrorMessage =
+                "Фотография слишком большая. " +
+                "Максимальный размер — 15 МБ.";
+        }
+        catch
+        {
+            slot.ErrorMessage =
+                "Не удалось загрузить фотографию. " +
+                "Попробуйте ещё раз.";
+        }
+    }
+
+    private async Task SaveProgressAsync(
+        bool showMessage)
+    {
+        if (isSaving)
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        if (showMessage)
+        {
+            saveMessage = "Сохранение...";
+        }
+
+        try
+        {
+            var progress = new BoardProgress
+            {
+                BoardId = MainBoardStorageKey,
+                SavedAtUtc = DateTime.UtcNow,
+
+                Slots = mainBoard.Slots
+                    .Where(slot => slot.HasPhoto)
+                    .Select(slot => new SavedPhotoSlot
+                    {
+                        Id = slot.Id,
+                        FileName = slot.FileName,
+                        ImageDataUrl = slot.ImageDataUrl
+                    })
+                    .ToList()
+            };
+
+            await JS.InvokeVoidAsync(
+                "weddingBoardStorage.save",
+                MainBoardStorageKey,
+                progress);
+
+            if (showMessage)
+            {
+                saveMessage =
+                    $"Прогресс сохранён: {DateTime.Now:HH:mm}";
+            }
+        }
+        catch
+        {
+            saveMessage =
+                "Не удалось сохранить прогресс в этом браузере.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task LoadProgressAsync()
+    {
+        try
+        {
+            var progress =
+                await JS.InvokeAsync<BoardProgress?>(
+                    "weddingBoardStorage.load",
+                    MainBoardStorageKey);
+
+            if (progress is null)
+            {
+                return;
+            }
+
+            foreach (var savedSlot in progress.Slots)
+            {
+                var slot = mainBoard.Slots.FirstOrDefault(
+                    item => item.Id == savedSlot.Id);
+
+                if (slot is null)
+                {
+                    continue;
+                }
+
+                slot.FileName =
+                    savedSlot.FileName;
+
+                slot.ImageDataUrl =
+                    savedSlot.ImageDataUrl;
+            }
+
+            if (progress.Slots.Count > 0)
+            {
+                saveMessage =
+                    "Сохранённый прогресс восстановлен.";
+            }
+        }
+        catch
+        {
+            saveMessage =
+                "Не удалось восстановить сохранённый прогресс.";
+        }
+    }
+
+    private async Task DownloadBoardAsync()
+    {
+        if (!HasAnyPhotos || isExporting)
+        {
+            return;
+        }
+
+        isExporting = true;
+        exportMessage = "Создаём PNG...";
+
+        try
+        {
+            await PrepareBoardForExportAsync();
+
+            await JS.InvokeAsync<string>(
+                "weddingBoardExport.downloadPng");
+
+            exportMessage =
+                "Фотоквест сохранён в формате PNG.";
+        }
+        catch
+        {
+            exportMessage =
+                "Не удалось создать PNG. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    private async Task ShareBoardAsync()
+    {
+        if (!HasAnyPhotos || isExporting)
+        {
+            return;
+        }
+
+        isExporting = true;
+
+        exportMessage =
+            "Подготавливаем фотографию...";
+
+        try
+        {
+            await PrepareBoardForExportAsync();
+
+            var result =
+                await JS.InvokeAsync<string>(
+                    "weddingBoardExport.sharePng");
+
+            exportMessage = result == "shared"
+                ? "Фотоквест отправлен."
+                : "Меню отправки недоступно. PNG скачан.";
+        }
+        catch (JSException exception)
+            when (exception.Message.Contains(
+                "AbortError",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            exportMessage =
+                "Отправка отменена.";
+        }
+        catch
+        {
+            exportMessage =
+                "Не удалось поделиться. " +
+                "Попробуйте скачать PNG.";
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    private async Task PrepareBoardForExportAsync()
+    {
+        selectedPhotoSlotId = null;
+
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(50);
+    }
+
+    private string GetPhotoFrameClass(
+        int slotId)
+    {
+        return selectedPhotoSlotId == slotId
+            ? "photo-frame photo-frame-selected"
+            : "photo-frame";
+    }
+
+    private static string GetPhotoInputId(
+        int slotId)
+    {
+        return $"photo-input-{slotId}";
+    }
+}
